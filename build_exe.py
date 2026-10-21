@@ -35,9 +35,11 @@ def build():
             shutil.rmtree(d, ignore_errors=True)
 
     # 2. Prepare PyInstaller command
-    # Add tessdata resource directory
+    # Add tessdata resource directory and samples
     tessdata_src = os.path.join(BASE_DIR, "resources", "tessdata")
     tessdata_arg = f"{tessdata_src};resources/tessdata"
+    samples_src = os.path.join(BASE_DIR, "samples")
+    samples_arg = f"{samples_src};samples"
 
     pyinstaller_cmd = [
         sys.executable,
@@ -47,6 +49,7 @@ def build():
         "--windowed",
         "--name=PharmaLeaf-AI",
         f"--add-data={tessdata_arg}",
+        f"--add-data={samples_arg}",
         "--hidden-import=PySide6.QtPrintSupport",
         "--hidden-import=arabic_reshaper",
         "--hidden-import=bidi.algorithm",

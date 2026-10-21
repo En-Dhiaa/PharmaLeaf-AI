@@ -11,7 +11,7 @@ from PySide6.QtGui import QAction, QKeySequence, QIcon, QFont
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QSplitter,
     QStatusBar, QToolBar, QMessageBox, QFileDialog, QProgressBar,
-    QLabel, QInputDialog, QApplication
+    QLabel, QInputDialog, QApplication, QToolButton, QMenu
 )
 
 from core.constants import (
@@ -161,6 +161,20 @@ class MainWindow(QMainWindow):
         act_open.triggered.connect(self.file_queue.choose_files)
         toolbar.addAction(act_open)
 
+        # Demo Samples Menu
+        from PySide6.QtWidgets import QMenu
+        demo_menu = QMenu("🧪 نشرات نموذجية", self)
+        act_demo1 = demo_menu.addAction("📄 بنادول إكسترا (عربي — عمودين)")
+        act_demo1.triggered.connect(lambda: self._load_sample_file("demo_panadol_arabic_2col.png"))
+        act_demo2 = demo_menu.addAction("📑 أموكسيسيلين 500 ملغ (PDF — 3 أعمدة)")
+        act_demo2.triggered.connect(lambda: self._load_sample_file("demo_amoxicillin_3col.pdf"))
+
+        btn_demo = QToolButton(self)
+        btn_demo.setText("🧪 تجربة نشرة نموذجية ▾")
+        btn_demo.setPopupMode(QToolButton.InstantPopup)
+        btn_demo.setMenu(demo_menu)
+        toolbar.addWidget(btn_demo)
+
         # Save Project
         act_save = QAction("💾 حفظ المشروع", self)
         act_save.setShortcut(QKeySequence.Save)
@@ -222,6 +236,14 @@ class MainWindow(QMainWindow):
         self.settings_mgr.set("theme", new_theme)
         self._apply_theme(new_theme)
         self.lbl_status.setText(f"تم تفعيل السمة: {'الداكنة' if new_theme == 'dark' else 'الفاتحة'}")
+
+    def _load_sample_file(self, filename: str):
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sample_path = os.path.join(base_dir, "samples", filename)
+        if os.path.exists(sample_path):
+            self.file_queue.add_files([sample_path])
+            self._on_file_selected(sample_path, 1)
+            self.lbl_status.setText(f"تم تحميل النشرة النموذجية: {filename} — انقر 'معالجة واستخراج 🚀' للبدء")
 
     def _on_file_selected(self, file_path: str, page_num: int):
         self.current_file_path = file_path
