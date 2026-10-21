@@ -1,0 +1,54 @@
+name: Build & Test PharmaLeaf AI (Windows)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+        cache: 'pip'
+
+    - name: Install System Tesseract OCR with Arabic Support
+      shell: pwsh
+      run: |
+        choco install tesseract --version=5.3.0.20221214 -y
+        # Download Arabic traineddata
+        $tessdata = "C:\Program Files\Tesseract-OCR\tessdata"
+        if (-not (Test-Path $tessdata)) { New-Item -ItemType Directory -Path $tessdata -Force }
+        Invoke-WebRequest -Uri "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/ara.traineddata" -OutFile "$tessdata\ara.traineddata"
+        & "C:\Program Files\Tesseract-OCR\tesseract.exe" --list-langs
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run Automated Test Suite
+      env:
+        QT_QPA_PLATFORM: offscreen
+      run: |
+        pytest tests -v
+
+    - name: Build Standalone Windows Executable
+      run: |
+        python build_exe.py
+
+    - name: Upload Windows Distribution Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: PharmaLeaf-AI-Windows
+        path: |
+          dist/PharmaLeaf-AI/
+          dist/PharmaLeaf-AI-checksums.txt
